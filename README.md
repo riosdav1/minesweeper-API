@@ -65,3 +65,41 @@ Game (Entity):
 * GameStatus status
 * LocalDateTime dateCreated
 * LocalDateTime lastUpdated
+
+## SAMPLE REQUESTS
+
+1. Sign up:
+
+```bash
+curl -sS -H 'Content-type: application/json' -d '{ "username":"riosdavi", "email":"riosdavi@gmail.com", "password":"123456"}' 'http://localhost:8080/minesweeper/user/signup'
+```
+
+2. Sign in:
+
+```bash
+curl -sS -H 'Content-type: application/json' -d '{ "username":"riosdavi", "password":"123456"}' 'http://localhost:8080/minesweeper/user/signin'
+```
+
+3. Create game:
+
+```bash
+curl -sS -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' -H 'Content-type: application/json' -d '{"numRows":10, "numCols":10, "numMines":5}' 'http://localhost:8080/minesweeper/game'
+```
+
+4. Get game with id 1:
+
+```bash
+curl -sS -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' 'http://localhost:8080/minesweeper/game/1'
+```
+
+5. Update game with id 1:
+
+```bash
+curl -sS -XPUT -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' -H 'Content-type: application/json' -d '{"timer":10, "minesLeft":2, "status":"GAME_LOST", "board":[10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]}' 'http://localhost:8080/minesweeper/game/1'
+```
+
+6. Delete all games for current user:
+
+```bash
+curl -sS -XDELETE -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' 'http://localhost:8080/minesweeper/game'
+```
