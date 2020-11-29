@@ -1,5 +1,6 @@
 package com.deviget.minesweeper.controller;
 
+import java.net.URI;
 import java.util.List;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.deviget.minesweeper.game.service.GameService;
 import com.deviget.minesweeper.model.Game;
 import com.deviget.minesweeper.payload.request.NewGameRequest;
@@ -22,7 +24,7 @@ import com.deviget.minesweeper.payload.response.MessageResponse;
 
 /**
  * Controller class which handles the life cycle of mine sweeper games.
- * 
+ *
  * @author david.rios
  */
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -36,19 +38,24 @@ public class GameController {
 
     /**
      * Interacts with {@link GameService} to create a new game associated to the current user.
-     * 
+     *
      * @param request - a {@link NewGameRequest} instance with the game details.
-     * @return a {@link Game} instance if the creation was successful, error otherwise.
+     * @return the location of created game as a Response Header.
      */
     @PostMapping()
     public ResponseEntity<?> createGame(@Valid @RequestBody NewGameRequest request) {
         Game game = gameService.createGame(request);
-        return ResponseEntity.ok(game);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(game.getId())
+                .toUri();
+        return ResponseEntity.created(location)
+                .build();
     }
 
     /**
      * Interacts with {@link GameService} to update an existing game.
-     * 
+     *
      * @param id - the game id.
      * @param request - a {@link UpdateGameRequest} instance with the allowed update properties.
      * @return the updated {@link Game} instance.
@@ -61,7 +68,7 @@ public class GameController {
 
     /**
      * Interacts with {@link GameService} to get all games for current user.
-     * 
+     *
      * @return a {@link List} of {@link Game} instances associated to the authenticated user.
      */
     @GetMapping()
@@ -72,7 +79,7 @@ public class GameController {
 
     /**
      * Interacts with {@link GameService} to get an individual game.
-     * 
+     *
      * @param id - the game id.
      * @return a {@link Game} instance if the game is associated to the authenticated user, an error otherwise.
      */
@@ -84,7 +91,7 @@ public class GameController {
 
     /**
      * Interacts with {@link GameService} to delete an individual game associated to the current user.
-     * 
+     *
      * @param id - the game id.
      * @return a {@link MessageResponse} indicating if the deletion was successful or not.
      */
@@ -96,7 +103,7 @@ public class GameController {
 
     /**
      * Interacts with {@link GameService} to delete all games associated to the current user.
-     * 
+     *
      * @return a {@link MessageResponse} indicating if the deletion was successful or not.
      */
     @DeleteMapping()
