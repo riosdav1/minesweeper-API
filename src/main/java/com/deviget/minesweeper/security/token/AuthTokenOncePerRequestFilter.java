@@ -18,7 +18,7 @@ import com.deviget.minesweeper.security.service.UserDetailsServiceImpl;
 
 /**
  * Filter class to validate authentication token.
- * 
+ *
  * @author david.rios
  */
 public class AuthTokenOncePerRequestFilter extends OncePerRequestFilter {
@@ -58,7 +58,7 @@ public class AuthTokenOncePerRequestFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Parses the authorization header from the given request a retrieves the bearer token.
+     * Parses the authorization header from the given request and retrieves the bearer token.
      */
     private String getTokenFromAuthorizationHeader(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
