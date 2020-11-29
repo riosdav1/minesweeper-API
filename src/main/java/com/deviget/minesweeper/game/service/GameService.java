@@ -19,7 +19,7 @@ import com.deviget.minesweeper.repository.GameRepository;
 
 /**
  * Service class implementing all operations for {@link Game} management.
- * 
+ *
  * @author david.rios
  */
 @Service
@@ -30,7 +30,7 @@ public class GameService {
 
     /**
      * Interacts with {@link GameRepository} to create a new game associated to the current user.
-     * 
+     *
      * @param request - a {@link NewGameRequest} instance with the game details.
      * @return a {@link Game} instance if the creation was successful, error otherwise.
      */
@@ -50,31 +50,31 @@ public class GameService {
                 int currentCol = minePosition % numCols;
                 if (currentCol > 0) {
                     // Top left adjacent cell
-                    updateIfAdjacentToMine(board, minePosition - numCols - 1);
+                    updateIfAdjacentToMine(board, minePosition - numCols - 1, true);
 
                     // Left adjacent cell
-                    updateIfAdjacentToMine(board, minePosition - 1);
+                    updateIfAdjacentToMine(board, minePosition - 1, true);
 
                     // Bottom left adjacent cell
-                    updateIfAdjacentToMine(board, minePosition + numCols - 1);
+                    updateIfAdjacentToMine(board, minePosition + numCols - 1, false);
                 }
 
                 if (currentCol < (numCols - 1)) {
                     // Top right adjacent cell
-                    updateIfAdjacentToMine(board, minePosition - numCols + 1);
+                    updateIfAdjacentToMine(board, minePosition - numCols + 1, true);
 
                     // Bottom right adjacent cell
-                    updateIfAdjacentToMine(board, minePosition + numCols + 1);
+                    updateIfAdjacentToMine(board, minePosition + numCols + 1, false);
 
                     // Right adjacent cell
-                    updateIfAdjacentToMine(board, minePosition + 1);
+                    updateIfAdjacentToMine(board, minePosition + 1, false);
                 }
 
                 // Top adjacent cell
-                updateIfAdjacentToMine(board, minePosition - numCols);
+                updateIfAdjacentToMine(board, minePosition - numCols, true);
 
                 // Bottom adjacent cell
-                updateIfAdjacentToMine(board, minePosition + numCols);
+                updateIfAdjacentToMine(board, minePosition + numCols, false);
             }
         }
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext()
@@ -88,7 +88,7 @@ public class GameService {
 
     /**
      * Interacts with {@link GameRepository} to update an existing game.
-     * 
+     *
      * @param id - the game id.
      * @param request - a {@link UpdateGameRequest} instance with the allowed update properties.
      * @return the updated {@link Game} instance.
@@ -114,7 +114,7 @@ public class GameService {
 
     /**
      * Interacts with {@link GameRepository} to get all games for current user.
-     * 
+     *
      * @return a {@link List} of {@link Game} instances associated to the authenticated user.
      */
     public List<Game> getAllGamesForCurrentUser() {
@@ -128,7 +128,7 @@ public class GameService {
 
     /**
      * Interacts with {@link GameRepository} to get an individual game.
-     * 
+     *
      * @param id - the game id.
      * @return a {@link Game} instance if the game is associated to the authenticated user, an error otherwise.
      */
@@ -147,7 +147,7 @@ public class GameService {
 
     /**
      * Interacts with {@link GameRepository} to delete an individual game associated to the current user.
-     * 
+     *
      * @param id - the game id.
      * @return a {@link MessageResponse} indicating if the deletion was successful or not.
      */
@@ -166,7 +166,7 @@ public class GameService {
 
     /**
      * Interacts with {@link GameRepository} to delete all games associated to the current user.
-     * 
+     *
      * @return a {@link MessageResponse} indicating if the deletion was successful or not.
      */
     public void deleteAllGamesForCurrentUser() {
@@ -182,7 +182,7 @@ public class GameService {
 
     /**
      * Checks if the given cell does not contain a mine. If so, plant one.
-     * 
+     *
      * @param cell - the board cell.
      * @return true if a mine was planted, false otherwise.
      */
@@ -196,12 +196,18 @@ public class GameService {
 
     /**
      * Updates the mines counter if the given cell is adjacent to a mine.
-     * 
+     *
      * @param board - the game board.
      * @param cellIndex - the index of the cell to check for adjacent mines.
      */
-    private void updateIfAdjacentToMine(List<Integer> board, int cellIndex) {
-        if (cellIndex >= 0) {
+    private void updateIfAdjacentToMine(List<Integer> board, int cellIndex, boolean cellIsBeforeMine) {
+        boolean update = false;
+        if (cellIsBeforeMine) {
+            update = (cellIndex >= 0);
+        } else {
+            update = (cellIndex < board.size());
+        }
+        if (update) {
             Integer cell = board.get(cellIndex);
             if (cell != COVERED_MINE.value()) {
                 cell += 1;
