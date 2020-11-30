@@ -8,6 +8,6 @@ package com.deviget.minesweeper.model;
 public enum GameStatus {
 
     IN_GAME,
-    GAME_WON,
-    GAME_LOST
+    WINNED,
+    LOST
 }

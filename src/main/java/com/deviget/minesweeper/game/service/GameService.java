@@ -1,19 +1,15 @@
 package com.deviget.minesweeper.game.service;
 
-import static com.deviget.minesweeper.model.CellStatus.COVERED_CELL;
-import static com.deviget.minesweeper.model.CellStatus.COVERED_MINE;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.deviget.minesweeper.model.Game;
-import com.deviget.minesweeper.payload.request.NewGameRequest;
-import com.deviget.minesweeper.payload.request.UpdateGameRequest;
+import com.deviget.minesweeper.model.GameStatus;
+import com.deviget.minesweeper.payload.dto.GameDto;
 import com.deviget.minesweeper.payload.response.MessageResponse;
 import com.deviget.minesweeper.repository.GameRepository;
 
@@ -23,6 +19,7 @@ import com.deviget.minesweeper.repository.GameRepository;
  * @author david.rios
  */
 @Service
+@Transactional
 public class GameService {
 
     @Autowired
@@ -31,82 +28,29 @@ public class GameService {
     /**
      * Interacts with {@link GameRepository} to create a new game associated to the current user.
      *
-     * @param request - a {@link NewGameRequest} instance with the game details.
-     * @return a {@link Game} instance if the creation was successful, error otherwise.
+     * @param request - a {@link GameDto} instance with the game details.
      */
-    public Game createGame(NewGameRequest request) {
-        int numCols = request.getNumCols();
-        int numRows = request.getNumRows();
-        int numMines = request.getNumMines();
-        int numCells = numRows * numCols;
-
-        List<Integer> board = new ArrayList<>(Collections.nCopies(numCells, COVERED_CELL.value()));
-
-        for (int i = 0; i < numMines; i++) {
-            int minePosition = ThreadLocalRandom.current()
-                    .nextInt(0, numCells);
-
-            if (newCoveredMineCell(board.get(minePosition))) {
-                int currentCol = minePosition % numCols;
-                if (currentCol > 0) {
-                    // Top left adjacent cell
-                    updateIfAdjacentToMine(board, minePosition - numCols - 1, true);
-
-                    // Left adjacent cell
-                    updateIfAdjacentToMine(board, minePosition - 1, true);
-
-                    // Bottom left adjacent cell
-                    updateIfAdjacentToMine(board, minePosition + numCols - 1, false);
-                }
-
-                if (currentCol < (numCols - 1)) {
-                    // Top right adjacent cell
-                    updateIfAdjacentToMine(board, minePosition - numCols + 1, true);
-
-                    // Bottom right adjacent cell
-                    updateIfAdjacentToMine(board, minePosition + numCols + 1, false);
-
-                    // Right adjacent cell
-                    updateIfAdjacentToMine(board, minePosition + 1, false);
-                }
-
-                // Top adjacent cell
-                updateIfAdjacentToMine(board, minePosition - numCols, true);
-
-                // Bottom adjacent cell
-                updateIfAdjacentToMine(board, minePosition + numCols, false);
-            }
+    public Game saveGame(GameDto gameDto) {
+        Game game;
+        Long id = gameDto.getId();
+        if (id != null) {
+            game = gameRepository.findById(id)
+                    .orElseThrow(() -> new GameNotFoundException("Game Not Found with id: " + id));
+            // rowRepository.deleteAllByGame(game);
+            game.setRowsFromCellArray(gameDto.getCells());
+            game.setRemainingCells(gameDto.getRemainingCells());
+            game.setTimer(gameDto.getTimer());
+            game.setStatus(GameStatus.valueOf(gameDto.getStatus()));
+            // Delete existing rows and cells because we're losing the id's.
+            // rowRepository.deleteAllByGame(game);
+        } else {
+            game = GameDto.toGame(gameDto);
+            UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext()
+                    .getAuthentication()
+                    .getPrincipal();
+            String username = userDetails.getUsername();
+            game.setUsername(username);
         }
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
-        String username = userDetails.getUsername();
-        Game game = new Game(numCols, numRows, numMines, board, username);
-        gameRepository.save(game);
-        return game;
-    }
-
-    /**
-     * Interacts with {@link GameRepository} to update an existing game.
-     *
-     * @param id - the game id.
-     * @param request - a {@link UpdateGameRequest} instance with the allowed update properties.
-     * @return the updated {@link Game} instance.
-     */
-    public Game updateGame(Long id, UpdateGameRequest request) {
-        Game game = gameRepository.findById(id)
-                .orElseThrow(() -> new GameNotFoundException("Game Not Found with id: " + id));
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
-        String username = userDetails.getUsername();
-        if (!username.equals(game.getUsername())) {
-            throw new GameNotAvailableException("Game Not Available for current user: " + username);
-        }
-        game.setTimer(request.getTimer());
-        game.setMinesLeft(request.getMinesLeft());
-        game.setBoard(request.getBoard());
-        game.setStatus(request.getStatus());
         game.setLastUpdated(LocalDateTime.now());
         gameRepository.save(game);
         return game;
@@ -177,41 +121,6 @@ public class GameService {
         List<Game> games = gameRepository.findAllByUsername(username);
         for (Game game : games) {
             gameRepository.delete(game);
-        }
-    }
-
-    /**
-     * Checks if the given cell does not contain a mine. If so, plant one.
-     *
-     * @param cell - the board cell.
-     * @return true if a mine was planted, false otherwise.
-     */
-    private boolean newCoveredMineCell(Integer cell) {
-        if (cell != COVERED_MINE.value()) {
-            cell = COVERED_MINE.value();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Updates the mines counter if the given cell is adjacent to a mine.
-     *
-     * @param board - the game board.
-     * @param cellIndex - the index of the cell to check for adjacent mines.
-     */
-    private void updateIfAdjacentToMine(List<Integer> board, int cellIndex, boolean cellIsBeforeMine) {
-        boolean update = false;
-        if (cellIsBeforeMine) {
-            update = (cellIndex >= 0);
-        } else {
-            update = (cellIndex < board.size());
-        }
-        if (update) {
-            Integer cell = board.get(cellIndex);
-            if (cell != COVERED_MINE.value()) {
-                cell += 1;
-            }
         }
     }
 }

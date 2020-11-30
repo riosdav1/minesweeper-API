@@ -1,10 +1,8 @@
 package com.deviget.minesweeper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.List;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -21,8 +19,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import com.deviget.minesweeper.model.Cell;
+import com.deviget.minesweeper.payload.dto.GameDto;
 import com.deviget.minesweeper.payload.request.LoginRequest;
-import com.deviget.minesweeper.payload.request.NewGameRequest;
 import com.deviget.minesweeper.payload.request.SignupRequest;
 import com.deviget.minesweeper.payload.response.LoginResponse;
 import com.deviget.minesweeper.payload.response.MessageResponse;
@@ -37,6 +36,8 @@ public class MinesweeperApplicationTest {
 
     private String accessToken;
     private HttpHeaders headers = new HttpHeaders();
+
+    private GameDto gameDto;
 
     @Test
     @Order(1)
@@ -67,28 +68,66 @@ public class MinesweeperApplicationTest {
 
     @Test
     @Order(3)
-    public void testCreateGameSucessfully() {
+    public void testSaveGameSucessfully() {
         headers.setBearerAuth(accessToken);
 
-        NewGameRequest request = new NewGameRequest(10, 10, 5);
-        HttpEntity<NewGameRequest> httpEntity = new HttpEntity<>(request, headers);
+        Cell[][] cells = new Cell[5][5];
+        for (int i = 0; i < cells.length; i++) {
+            for (int j = 0; j < cells.length; j++) {
+                Cell cell = new Cell(i, j, "open", false, 1);
+                cells[i][j] = cell;
+            }
+        }
+        GameDto dto = new GameDto(null, "testuser", 1000l, 10, 5, cells, 2, "IN_GAME", LocalDateTime.now());
+        HttpEntity<GameDto> httpEntity = new HttpEntity<>(dto, headers);
 
-        ResponseEntity<?> response = restTemplate.postForEntity("/game", httpEntity, String.class);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Unexpected Status code");
+        ResponseEntity<GameDto> response = restTemplate.postForEntity("/game", httpEntity, GameDto.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected Status code");
 
-        List<String> location = response.getHeaders()
-                .get(HttpHeaders.LOCATION);
-        assertNotNull(location, "Location header is not present");
-        assertNotEquals(location.size(), 0, "Location header is empty");
+        GameDto game = response.getBody();
+        assertNotNull(game, "Message Response is empty");
+        assertNotNull(game.getId(), "Null Game Id");
+        assertNotNull(game.getCells(), "Null Game Cells");
 
-        String actual = location.get(0);
-        assertTrue(actual.contains("/minesweeper/game/"), "Unexpected Location headers");
+        this.gameDto = game;
     }
 
     @Test
     @Order(4)
+    public void testGetOneGameSucessfully() {
+        HttpEntity<GameDto> httpEntity = new HttpEntity<>(null, headers);
+
+        ResponseEntity<GameDto> response = restTemplate.exchange("/game/" + gameDto.getId(), HttpMethod.GET, httpEntity, GameDto.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected Status code");
+
+        GameDto game = response.getBody();
+        assertNotNull(game, "Message Response is empty");
+        assertEquals(game.getId(), gameDto.getId(), "Invalid Game Id");
+        assertNotNull(game.getCells(), "Game Cells is empty");
+    }
+
+    @Test
+    @Order(3)
+    public void testUpdateGameSucessfully() {
+        this.gameDto.setStatus("LOST");
+        this.gameDto.setTimer(1000l);
+        HttpEntity<GameDto> httpEntity = new HttpEntity<>(this.gameDto, headers);
+
+        ResponseEntity<GameDto> response = restTemplate.postForEntity("/game", httpEntity, GameDto.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected Status code");
+
+        GameDto game = response.getBody();
+        assertNotNull(game, "Message Response is empty");
+        assertEquals(game.getId(), gameDto.getId(), "Invalid Game Id");
+        assertNotNull(game.getCells(), "Game Cells is empty");
+        assertEquals(game.getTimer(), gameDto.getTimer(), "Invalid Timer");
+        assertEquals(game.getStatus(), gameDto.getStatus(), "Invalid Status");
+    }
+
+    @Test
+    @Order(5)
     public void testDeleteAllGamesSucessfully() {
-        HttpEntity<NewGameRequest> httpEntity = new HttpEntity<>(null, headers);
+        HttpEntity<GameDto> httpEntity = new HttpEntity<>(null, headers);
 
         ResponseEntity<MessageResponse> response = restTemplate.exchange("/game", HttpMethod.DELETE, httpEntity, MessageResponse.class);
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Unexpected Status code");

@@ -1,23 +1,29 @@
 package com.deviget.minesweeper.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Entity class representing a mine sweeper game as it will be persisted in the underline data source.
- * 
+ *
  * @author david.rios
  */
 @Entity
 public class Game {
+
+    private static final Logger logger = LoggerFactory.getLogger(Game.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,28 +31,20 @@ public class Game {
 
     private String username;
 
-    @Column(name = "num_cols")
-    private int numCols;
-
-    @Column(name = "num_rows")
-    private int numRows;
-
-    @Column(name = "num_mines")
-    private int numMines;
-
-    @Column(name = "mines_left")
-    private int minesLeft;
-
-    @ElementCollection
-    private List<Integer> board;
-
     private Long timer = 0l;
+
+    private Integer size;
+
+    private Integer mines;
+
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Row> rows;
+
+    @Column(name = "remaining_cells")
+    private Integer remainingCells;
 
     @Enumerated(EnumType.STRING)
     private GameStatus status = GameStatus.IN_GAME;
-
-    @Column(name = "date_created")
-    private LocalDateTime dateCreated;
 
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated;
@@ -54,15 +52,58 @@ public class Game {
     public Game() {
     }
 
-    public Game(int numCols, int numRows, int numMines, List<Integer> board, String username) {
-        this.numCols = numCols;
-        this.numRows = numRows;
-        this.numMines = numMines;
-        this.board = board;
-        this.minesLeft = numMines;
-        this.dateCreated = LocalDateTime.now();
-        this.lastUpdated = dateCreated;
+    public Game(Long id, String username, Long timer, Integer size, Integer mines, List<Row> rows, Integer remainingCells,
+            GameStatus status, LocalDateTime lastUpdated) {
+        this.id = id;
         this.username = username;
+        this.timer = timer;
+        this.size = size;
+        this.mines = mines;
+        this.rows = rows;
+        this.remainingCells = remainingCells;
+        this.status = status;
+        this.lastUpdated = lastUpdated;
+    }
+
+    public void addRow(Row row) {
+        if (row != null) {
+            if (rows == null) {
+                rows = new ArrayList<>();
+            }
+            rows.add(row);
+            row.setGame(this);
+        }
+    }
+
+    public void setRowsFromCellArray(Cell[][] cellsArray) {
+        if (this.rows != null) {
+            this.rows.clear();
+        }
+        for (int i = 0; i < cellsArray.length; i++) {
+            Row row = new Row();
+            for (int j = 0; j < cellsArray[i].length; j++) {
+                Cell cell = cellsArray[i][j];
+                row.addCell(cell);
+            }
+            this.addRow(row);
+        }
+        for (Row row : this.getRows()) {
+            logger.debug(">>> row:" + row);
+        }
+    }
+
+    public Cell[][] getCellArrayFromRows() {
+        Cell[][] cellsArray = new Cell[rows.size()][rows.size()];
+        int i = 0;
+        for (Row row : rows) {
+            int j = 0;
+            for (Cell cell : row.getCells()) {
+                cellsArray[i][j] = cell;
+                j++;
+            }
+            i++;
+        }
+        return cellsArray;
     }
 
     public Long getId() {
@@ -77,48 +118,24 @@ public class Game {
         return username;
     }
 
-    public int getNumCols() {
-        return numCols;
+    public int getSize() {
+        return size;
     }
 
-    public void setNumCols(int numCols) {
-        this.numCols = numCols;
+    public void setSize(int size) {
+        this.size = size;
     }
 
-    public int getNumRows() {
-        return numRows;
+    public int getMines() {
+        return mines;
     }
 
-    public void setNumRows(int numRows) {
-        this.numRows = numRows;
-    }
-
-    public int getNumMines() {
-        return numMines;
-    }
-
-    public void setNumMines(int numMines) {
-        this.numMines = numMines;
-    }
-
-    public int getMinesLeft() {
-        return minesLeft;
-    }
-
-    public void setMinesLeft(int minesLeft) {
-        this.minesLeft = minesLeft;
+    public void setMines(int mines) {
+        this.mines = mines;
     }
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public List<Integer> getBoard() {
-        return board;
-    }
-
-    public void setBoard(List<Integer> board) {
-        this.board = board;
     }
 
     public Long getTimer() {
@@ -137,19 +154,35 @@ public class Game {
         this.status = status;
     }
 
-    public LocalDateTime getDateCreated() {
-        return dateCreated;
-    }
-
-    public void setDateCreated(LocalDateTime dateCreated) {
-        this.dateCreated = dateCreated;
-    }
-
     public LocalDateTime getLastUpdated() {
         return lastUpdated;
     }
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public List<Row> getRows() {
+        return rows;
+    }
+
+    public void setRows(List<Row> rows) {
+        this.rows = rows;
+    }
+
+    public Integer getRemainingCells() {
+        return remainingCells;
+    }
+
+    public void setRemainingCells(Integer remainingCells) {
+        this.remainingCells = remainingCells;
+    }
+
+    public void setSize(Integer size) {
+        this.size = size;
+    }
+
+    public void setMines(Integer mines) {
+        this.mines = mines;
     }
 }

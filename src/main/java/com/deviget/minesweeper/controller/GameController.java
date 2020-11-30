@@ -1,7 +1,7 @@
 package com.deviget.minesweeper.controller;
 
-import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,15 +11,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.deviget.minesweeper.game.service.GameService;
 import com.deviget.minesweeper.model.Game;
-import com.deviget.minesweeper.payload.request.NewGameRequest;
-import com.deviget.minesweeper.payload.request.UpdateGameRequest;
+import com.deviget.minesweeper.payload.dto.GameDto;
 import com.deviget.minesweeper.payload.response.MessageResponse;
 
 /**
@@ -39,31 +36,14 @@ public class GameController {
     /**
      * Interacts with {@link GameService} to create a new game associated to the current user.
      *
-     * @param request - a {@link NewGameRequest} instance with the game details.
+     * @param request - a {@link GameDto} instance with the game details.
      * @return the location of created game as a Response Header.
      */
     @PostMapping()
-    public ResponseEntity<?> createGame(@Valid @RequestBody NewGameRequest request) {
-        Game game = gameService.createGame(request);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(game.getId())
-                .toUri();
-        return ResponseEntity.created(location)
-                .build();
-    }
-
-    /**
-     * Interacts with {@link GameService} to update an existing game.
-     *
-     * @param id - the game id.
-     * @param request - a {@link UpdateGameRequest} instance with the allowed update properties.
-     * @return the updated {@link Game} instance.
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateGame(@PathVariable Long id, @Valid @RequestBody UpdateGameRequest request) {
-        Game game = gameService.updateGame(id, request);
-        return ResponseEntity.ok(game);
+    public ResponseEntity<?> saveGame(@Valid @RequestBody GameDto gameDto) {
+        Game game = gameService.saveGame(gameDto);
+        gameDto = GameDto.fromGame(game, true);
+        return ResponseEntity.ok(gameDto);
     }
 
     /**
@@ -73,7 +53,10 @@ public class GameController {
      */
     @GetMapping()
     public ResponseEntity<?> getAllGamesForCurrentUser() {
-        List<Game> games = gameService.getAllGamesForCurrentUser();
+        List<GameDto> games = gameService.getAllGamesForCurrentUser()
+                .stream()
+                .map(game -> GameDto.fromGame(game, false))
+                .collect(Collectors.toList());
         return ResponseEntity.ok(games);
     }
 
@@ -86,7 +69,8 @@ public class GameController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getGame(@PathVariable Long id) {
         Game game = gameService.getGame(id);
-        return ResponseEntity.ok(game);
+        GameDto gameDto = GameDto.fromGame(game, true);
+        return ResponseEntity.ok(gameDto);
     }
 
     /**
