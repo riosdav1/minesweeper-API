@@ -4,6 +4,12 @@
 
 See: https://github.com/deviget/minesweeper-API/blob/master/README.md
 
+## RUNNING INSTANCE
+
+Try the API (see sample requests below): https://spring-boot-minesweeper-api.herokuapp.com/minesweeper
+
+Try the Angular client: https://angular-minesweeper-app.herokuapp.com/
+
 ## ASUMPTIONS
 
 1. DB-based, single role, user registration.
@@ -109,7 +115,7 @@ curl -H 'Content-type: application/json' -d '{ "username":"riosdavi", "password"
 ### Save game
 
 ```bash
-curl -H 'Authorization: Bearer ...' -H 'Content-type: application/json' -d '{"size":10, "mines":5, "remainingCells":3, "status":"LOST", "cells":[[0, 1, "open", false, ...], ...]}' 'http://localhost:8080/minesweeper/game'
+curl -H 'Authorization: Bearer ...' -H 'Content-type: application/json' -d '{"size":10, "mines":5, "remainingCells":3, "status":"IN_GAME", "cells":[[0, 1, "open", false, ...], ...]}' 'http://localhost:8080/minesweeper/game'
 ```
 
 ### Get game with id 1
