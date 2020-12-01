@@ -8,11 +8,11 @@ See: https://github.com/deviget/minesweeper-API/blob/master/README.md
 
 1. DB-based, single role, user registration.
 2. Token based user authentication.
-3. ~~~For new games, the API will initialize each cell of the game board with one of: mined / covered / number of adjacent mines.~~~ The game will be initialized in the client. The API will only provide CRUD operations.
+3. ~~For new games, the API will initialize each cell of the game board with one of: mined / covered / number of adjacent mines.~~ The game will be initialized in the client. The API will only provide CRUD operations.
 4. New games will be associated to the authenticated user.
 5. Timer and game board will be updated on client side, possibly allowing the user to pause the game.
 6. A game will have one of three possible statuses: IN_GAME, LOST, WINNED.
-7. ~~~The API will allow to update the following properties of a game: timer, mines left, status, game board.~~~ The API will provide a single POST endpoint to create/update games.
+7. ~~The API will allow to update the following properties of a game: timer, mines left, status, game board.~~ The API will provide a single POST endpoint to create/update games.
 8. The API will allow to retrieve an individual game, or all the games, as long as the current user is the owner.
 9. The API will support removal of an individual game, or all of them, as long as the current user is the owner.
 10. The web application will require registration and login.
@@ -50,11 +50,11 @@ See: https://en.wikipedia.org/wiki/Microsoft_Minesweeper#Gameplay
 
 ## PERSISTENCE
 
-1. Database
+### Database
 
-MySQL
+Postgresql JDBC
 
-2. Entities & Models
+### Entities & Models
 
 User (Entity):
 * Long id
@@ -94,38 +94,32 @@ Cell (Entity):
 
 ## SAMPLE REQUESTS
 
-1. Sign up:
+### Sign up
 
 ```bash
-curl -sS -H 'Content-type: application/json' -d '{ "username":"riosdavi", "email":"riosdavi@gmail.com", "password":"123456"}' 'http://localhost:8080/minesweeper/user/signup'
+curl -H 'Content-type: application/json' -d '{ "username":"riosdavi", "email":"riosdavi@gmail.com", "password":"123456"}' 'http://localhost:8080/minesweeper/user/signup'
 ```
 
-2. Sign in:
+### Sign in
 
 ```bash
-curl -sS -H 'Content-type: application/json' -d '{ "username":"riosdavi", "password":"123456"}' 'http://localhost:8080/minesweeper/user/signin'
+curl -H 'Content-type: application/json' -d '{ "username":"riosdavi", "password":"123456"}' 'http://localhost:8080/minesweeper/user/signin'
 ```
 
-3. Create game:
+### Save game
 
 ```bash
-curl -sS -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' -H 'Content-type: application/json' -d '{"numRows":10, "numCols":10, "numMines":5}' 'http://localhost:8080/minesweeper/game'
+curl -H 'Authorization: Bearer ...' -H 'Content-type: application/json' -d '{"size":10, "mines":5, "remainingCells":3, "status":"LOST", "cells":[[0, 1, "open", false, ...], ...]}' 'http://localhost:8080/minesweeper/game'
 ```
 
-4. Get game with id 1:
+### Get game with id 1
 
 ```bash
-curl -sS -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' 'http://localhost:8080/minesweeper/game/1'
+curl -H 'Authorization: Bearer ...' 'http://localhost:8080/minesweeper/game/1'
 ```
 
-5. Update game with id 1:
+### Delete all games for current user
 
 ```bash
-curl -sS -XPUT -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' -H 'Content-type: application/json' -d '{"timer":10, "minesLeft":2, "status":"GAME_LOST", "board":[10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]}' 'http://localhost:8080/minesweeper/game/1'
-```
-
-6. Delete all games for current user:
-
-```bash
-curl -sS -XDELETE -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJyaW9zZGF2aSIsImlhdCI6MTYwNjM2OTgzNiwiZXhwIjoxNjA2NDU2MjM2fQ.4U1mENwAko_i5CVv7YQcS_Eizdnj5BDRT7LKISVtZvrFNbKs3hKh99WM0rNYyYp_WTEaQ4wriFUVBATWX2sTqQ' 'http://localhost:8080/minesweeper/game'
+curl -XDELETE -H 'Authorization: Bearer ...' 'http://localhost:8080/minesweeper/game'
 ```
