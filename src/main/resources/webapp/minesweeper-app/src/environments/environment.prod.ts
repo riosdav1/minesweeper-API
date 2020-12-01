@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8080/minesweeper'
+  apiUrl: 'https://spring-boot-minesweeper-api.herokuapp.com/minesweeper'
 };

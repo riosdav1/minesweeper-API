@@ -3,11 +3,12 @@
     "version": "1.0.0",
     "scripts": {
         "ng": "ng",
-        "start": "ng serve --open",
+        "heroku-postbuild": "ng build --prod &amp;&amp; npm install -g http-server-spa",
         "build": "ng build",
         "test": "ng test",
         "lint": "ng lint",
-        "e2e": "ng e2e"
+        "e2e": "ng e2e",
+        "start": "http-server-spa dist/angular-reddit-clone index.html $PORT"
     },
     "private": true,
     "license": "MIT",
