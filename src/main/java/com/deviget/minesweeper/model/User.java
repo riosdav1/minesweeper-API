@@ -12,11 +12,11 @@ import javax.validation.constraints.Size;
 
 /**
  * Entity class representing an authenticated user.
- * 
+ *
  * @author david.rios
  */
 @Entity
-@Table(uniqueConstraints = { @UniqueConstraint(columnNames = "username"), @UniqueConstraint(columnNames = "email") })
+@Table(name = "_user", uniqueConstraints = { @UniqueConstraint(columnNames = "username"), @UniqueConstraint(columnNames = "email") })
 public class User {
 
     @Id
